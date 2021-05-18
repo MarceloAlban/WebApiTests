@@ -7,6 +7,7 @@ import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.util.pipeline.*
+import kotlinx.coroutines.delay
 import java.io.File
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
@@ -14,7 +15,10 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 fun String.isJsonFile() = this.toLowerCase().contains(".json")
 fun getFile(name: String): File = File("./resources/$name")
 
-suspend fun PipelineContext<*, ApplicationCall>.respondContent(param: String) {
+suspend fun PipelineContext<*, ApplicationCall>.respondContent(param: String, delayStr: String?) {
+    delayStr?.let {
+        delay(it.toLong())
+    }
     if (param.isJsonFile()) {
         call.respondFile(getFile(param))
     } else {
@@ -46,22 +50,22 @@ fun Application.module(testing: Boolean = false) {
                     when (params[1]) {
                         HttpMethod.Get.value -> {
                             get(params[0]) {
-                                respondContent(params[2])
+                                respondContent(params[2], params.getOrNull(3))
                             }
                         }
                         HttpMethod.Post.value -> {
                             post(params[0]) {
-                                respondContent(params[2])
+                                respondContent(params[2], params.getOrNull(3))
                             }
                         }
                         HttpMethod.Put.value -> {
                             put(params[0]) {
-                                respondContent(params[2])
+                                respondContent(params[2], params.getOrNull(3))
                             }
                         }
                         HttpMethod.Delete.value -> {
                             delete(params[0]) {
-                                respondContent(params[2])
+                                respondContent(params[2], params.getOrNull(3))
                             }
                         }
                     }
