@@ -15,14 +15,20 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 fun String.isJsonFile() = this.toLowerCase().contains(".json")
 fun getFile(name: String): File = File("./resources/$name")
 
-suspend fun PipelineContext<*, ApplicationCall>.respondContent(param: String, delayStr: String?) {
+suspend fun PipelineContext<*, ApplicationCall>.respondContent(
+    param: String,
+    delayStr: String?,
+    statusCode: Int = 200
+) {
     delayStr?.let {
         delay(it.toLong())
     }
+    val statusCode = HttpStatusCode.fromValue(statusCode)
     if (param.isJsonFile()) {
+        call.response.status(statusCode)
         call.respondFile(getFile(param))
     } else {
-        call.respondText(param, ContentType.Application.Json, HttpStatusCode.OK)
+        call.respondText(param, ContentType.Application.Json, statusCode)
     }
 }
 
@@ -50,22 +56,22 @@ fun Application.module(testing: Boolean = false) {
                     when (params[1]) {
                         HttpMethod.Get.value -> {
                             get(params[0]) {
-                                respondContent(params[2], params.getOrNull(3))
+                                respondContent(params[2], params.getOrNull(3), params.getOrNull(4)?.toInt() ?: 200)
                             }
                         }
                         HttpMethod.Post.value -> {
                             post(params[0]) {
-                                respondContent(params[2], params.getOrNull(3))
+                                respondContent(params[2], params.getOrNull(3), params.getOrNull(4)?.toInt() ?: 200)
                             }
                         }
                         HttpMethod.Put.value -> {
                             put(params[0]) {
-                                respondContent(params[2], params.getOrNull(3))
+                                respondContent(params[2], params.getOrNull(3), params.getOrNull(4)?.toInt() ?: 200)
                             }
                         }
                         HttpMethod.Delete.value -> {
                             delete(params[0]) {
-                                respondContent(params[2], params.getOrNull(3))
+                                respondContent(params[2], params.getOrNull(3), params.getOrNull(4)?.toInt() ?: 200)
                             }
                         }
                     }
